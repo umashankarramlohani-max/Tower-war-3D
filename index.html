@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Tower War 3D - Color Battle</title>
+  <style>
+    :root {
+      --bg-dark: #021a12;
+      --bg-darker: #010e0a;
+      --primary: #10b981;
+      --primary-light: #34d399;
+      --amber: #f59e0b;
+      --amber-light: #fbbf24;
+      --blue: #3b82f6;
+      --red: #ef4444;
+      --gray: #64748b;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: radial-gradient(circle at center, #063826 0%, #021a12 50%, #010e0a 100%);
+      color: #fff;
+    }
+
+    #app-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Navigation Bar */
+    header.game-header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 50;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 14px;
+      background: rgba(2, 26, 18, 0.85);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid rgba(16, 185, 129, 0.4);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+    }
+    .brand-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #34d399;
+      text-shadow: 0 0 10px rgba(52, 211, 153, 0.6);
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      transition: all 0.2s ease;
+      background: #0f3628;
+      color: #fff;
+    }
+    .btn-pill:active { transform: scale(0.95); }
+    .btn-coins {
+      background: linear-gradient(135deg, #78350f, #b45309);
+      border-color: #f59e0b;
+      color: #fef3c7;
+      box-shadow: 0 0 12px rgba(245, 158, 11, 0.4);
+    }
+    .btn-admin {
+      background: #1e293b;
+      border-color: #475569;
+      color: #94a3b8;
+    }
+    .btn-missions {
+      background: linear-gradient(135deg, #064e3b, #047857);
+      border-color: #10b981;
+      color: #a7f3d0;
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+    }
+    .streak-badge {
+      background: linear-gradient(135deg, #ea580c, #dc2626);
+      border: 1px solid #f97316;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 4px 8px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      animation: pulseStreak 2s infinite;
+    }
+    @keyframes pulseStreak {
+      0%, 100% { transform: scale(1); filter: brightness(1); }
+      50% { transform: scale(1.05); filter: brightness(1.2); }
+    }
+
+    /* Screens */
+    .screen {
+      position: absolute;
+      top: 56px;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .screen.active { display: flex; }
+
+    /* Level Roadmap */
+    #screen-roadmap {
+      overflow-y: auto;
+      background: radial-gradient(circle at 50% 20%, #063826 0%, #021a12 60%, #010e0a 100%);
+    }
+    .roadmap-container {
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 24px 16px 80px 16px;
+      position: relative;
+    }
+    .roadmap-stats {
+      background: rgba(2, 44, 29, 0.85);
+      border: 1px solid rgba(16, 185, 129, 0.5);
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+    .roadmap-stats-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 13px;
+      font-weight: 800;
+      color: #34d399;
+    }
+    .progress-bar-bg {
+      width: 100%;
+      height: 8px;
+      background: #012117;
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #10b981, #34d399, #f59e0b);
+      width: 1%;
+      transition: width 0.4s ease;
+    }
+    .roadmap-nodes {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 32px;
+      position: relative;
+    }
+    .roadmap-nodes::before {
+      content: '';
+      position: absolute;
+      top: 20px;
+      bottom: 20px;
+      width: 6px;
+      background: linear-gradient(180deg, #10b981 0%, #047857 50%, #064e3b 100%);
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.6);
+      border-radius: 4px;
+      z-index: 1;
+    }
+    .node-item {
+      position: relative;
+      z-index: 2;
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.5);
+    }
+    .node-item.completed {
+      background: linear-gradient(135deg, #059669, #10b981);
+      border: 3px solid #6ee7b7;
+      color: #fff;
+    }
+    .node-item.current {
+      background: linear-gradient(135deg, #d97706, #fbbf24);
+      border: 4px solid #fef08a;
+      color: #111;
+      transform: scale(1.15);
+      animation: pulseNode 1.5s infinite;
+    }
+    @keyframes pulseNode {
+      0%, 100% { box-shadow: 0 0 16px rgba(251, 191, 36, 0.7); }
+      50% { box-shadow: 0 0 32px rgba(251, 191, 36, 1); }
+    }
+    .node-item.locked {
+      background: #1e293b;
+      border: 3px solid #334155;
+      color: #64748b;
+      cursor: not-allowed;
+      opacity: 0.8;
+    }
+    .node-level-text { font-size: 16px; }
+    .node-reward-tag {
+      font-size: 9px;
+      color: #fef3c7;
+      margin-top: 2px;
+      font-weight: 800;
+    }
+
+    /* Battlefield */
+    #screen-battle {
+      background: #021a12;
+      position: relative;
+    }
+    #battle-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      touch-action: none;
+    }
+    .hud-overlay {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+      z-index: 20;
+    }
+    .hud-pill {
+      pointer-events: auto;
+      background: rgba(2, 38, 26, 0.85);
+      border: 1px solid rgba(16, 185, 129, 0.6);
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 800;
+      color: #a7f3d0;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+    }
+    .hud-controls {
+      position: absolute;
+      bottom: 20px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      pointer-events: none;
+      z-index: 20;
+    }
+    .hud-btn {
+      pointer-events: auto;
+      padding: 10px 18px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      color: #e2e8f0;
+      border-radius: 14px;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    }
+    .hud-btn:active { transform: scale(0.95); }
+
+    /* Modals */
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 16px;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal-box {
+      width: 100%;
+      max-width: 440px;
+      max-height: 85vh;
+      overflow-y: auto;
+      background: #022417;
+      border: 1px solid rgba(16, 185, 129, 0.6);
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.7), 0 0 25px rgba(16, 185, 129, 0.3);
+      padding: 20px;
+      position: relative;
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      border-bottom: 1px solid rgba(16, 185, 129, 0.2);
+      padding-bottom: 10px;
+    }
+    .modal-title {
+      font-size: 17px;
+      font-weight: 900;
+      color: #34d399;
+      text-transform: uppercase;
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 20px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .mission-card {
+      background: rgba(1, 24, 16, 0.7);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 14px;
+      padding: 12px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .mission-card.completed {
+      border-color: #f59e0b;
+      background: rgba(245, 158, 11, 0.08);
+    }
+    .mission-info h4 {
+      font-size: 13px;
+      font-weight: 800;
+      color: #f1f5f9;
+      margin-bottom: 4px;
+    }
+    .mission-info p {
+      font-size: 11px;
+      color: #94a3b8;
+    }
+    .mission-action button {
+      background: linear-gradient(135deg, #059669, #10b981);
+      border: none;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 6px 12px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+    .mission-action button:disabled {
+      background: #334155;
+      color: #64748b;
+      cursor: not-allowed;
+    }
+
+    /* Withdraw Form */
+    .withdraw-box {
+      background: #011d13;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 14px;
+      padding: 14px;
+      margin-top: 14px;
+    }
+    .input-field {
+      width: 100%;
+      background: #00100a;
+      border: 1px solid rgba(16, 185, 129, 0.5);
+      border-radius: 10px;
+      padding: 10px 12px;
+      color: #fff;
+      font-size: 13px;
+      margin: 8px 0 12px 0;
+      outline: none;
+    }
+    .btn-submit-withdraw {
+      width: 100%;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      border: none;
+      color: #000;
+      font-size: 13px;
+      font-weight: 900;
+      padding: 12px;
+      border-radius: 12px;
+      cursor: pointer;
+      text-transform: uppercase;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 8px;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+    .status-pending { background: rgba(245, 158, 11, 0.2); border: 1px solid #f59e0b; color: #fbbf24; }
+    .status-paid { background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; color: #34d399; }
+    .status-rejected { background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #f87171; }
+
+    /* Result */
+    .result-modal { text-align: center; padding: 24px 16px; }
+    .result-icon { font-size: 48px; margin-bottom: 10px; }
+    .result-title { font-size: 22px; font-weight: 900; margin-bottom: 8px; }
+    .result-reward { font-size: 15px; color: #f59e0b; margin-bottom: 20px; font-weight: bold; }
+    .result-btns { display: flex; gap: 10px; justify-content: center; }
+  </style>
+</head>
+<body>
+
+<div id="app-container">
+  <header class="game-header">
+    <div class="brand-title" id="btn-home-logo" style="cursor: pointer;">
+      <span>🏰</span>
+      <span>Tower War 3D</span>
+    </div>
+
+    <div class="header-actions">
+      <div id="top-streak-badge" class="streak-badge" style="display: none;">
+        <span>🔥</span>
+        <span id="top-streak-count">0</span> Streak
+      </div>
+
+      <button class="btn-pill btn-missions" id="btn-open-missions">
+        <span>🎯</span>
+        <span>Missions</span>
+      </button>
+
+      <button class="btn-pill btn-admin" id="btn-open-admin">
+        <span>🛡️</span>
+        <span>Admin</span>
+      </button>
+
+      <button class="btn-pill btn-coins" id="btn-open-rewards">
+        <span>🪙</span>
+        <span id="top-coins-count">0</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Level Roadmap -->
+  <section id="screen-roadmap" class="screen active">
+    <div class="roadmap-container">
+      <div class="roadmap-stats">
+        <div class="roadmap-stats-top">
+          <span>🚩 Level: <strong id="road-current-lvl-text">Level 1 / 500</strong></span>
+          <span style="color: #fbbf24;">Earn +10 Coins / Level</span>
+        </div>
+        <div class="progress-bar-bg">
+          <div id="road-progress-fill" class="progress-bar-fill"></div>
+        </div>
+      </div>
+
+      <div class="roadmap-nodes" id="roadmap-nodes-container"></div>
+    </div>
+  </section>
+
+  <!-- Battlefield Canvas -->
+  <section id="screen-battle" class="screen">
+    <div class="hud-overlay">
+      <div class="hud-pill" id="hud-level-indicator">Level 1</div>
+      <div class="hud-pill" style="border-color: #f59e0b; color: #fef08a;" id="hud-streak-indicator">🔥 Streak: 0</div>
+      <button class="btn-pill" id="btn-back-to-map" style="background: rgba(15,23,42,0.8);">🗺️ Map</button>
+    </div>
+
+    <canvas id="battle-canvas"></canvas>
+
+    <div class="hud-controls">
+      <button class="hud-btn" id="btn-restart-battle">🔄 Restart</button>
+      <button class="hud-btn" id="btn-battle-missions">🎯 Missions</button>
+    </div>
+  </section>
+</div>
+
+<!-- Modal Missions -->
+<div id="modal-missions" class="modal-backdrop">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">🎯 Daily Missions</div>
+      <button class="modal-close" data-close="modal-missions">&times;</button>
+    </div>
+    <div style="font-size: 12px; color: #a7f3d0; margin-bottom: 14px;">
+      Earn up to <strong>1,250 Coins</strong> daily! Live auto-tracking.
+    </div>
+    <div id="missions-list"></div>
+  </div>
+</div>
+
+<!-- Modal Rewards & Withdraw -->
+<div id="modal-rewards" class="modal-backdrop">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">🪙 Coins & Withdrawal</div>
+      <button class="modal-close" data-close="modal-rewards">&times;</button>
+    </div>
+
+    <div style="background: rgba(0,0,0,0.4); padding: 14px; border-radius: 12px; margin-bottom: 14px; border: 1px solid rgba(245, 158, 11, 0.4); text-align: center;">
+      <div style="font-size: 11px; text-transform: uppercase; color: #fbbf24; font-weight: 800;">Current Balance</div>
+      <div style="font-size: 28px; font-weight: 900; color: #fef08a; margin: 4px 0;" id="reward-coins-big">0 Coins</div>
+      <div style="font-size: 13px; color: #34d399; font-weight: bold;" id="reward-inr-equiv">≈ ₹0 INR</div>
+      <div style="font-size: 10px; color: #94a3b8; margin-top: 4px;">10,000 Coins = ₹100 | +10 Coins per level</div>
+    </div>
+
+    <div class="withdraw-box">
+      <div style="font-size: 12px; font-weight: 800; color: #f59e0b; text-transform: uppercase;">UPI Withdrawal (Min: 10,000 Coins / ₹100)</div>
+      <input type="text" id="upi-input" class="input-field" placeholder="Enter UPI ID (e.g. name@upi)" />
+      <button class="btn-submit-withdraw" id="btn-submit-withdraw">Withdraw ₹100 (10,000 Coins)</button>
+      <div id="withdraw-msg" style="font-size: 11px; margin-top: 8px; color: #f87171; text-align: center;"></div>
+    </div>
+
+    <div style="margin-top: 18px;">
+      <div style="font-size: 12px; font-weight: 800; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase;">History</div>
+      <div id="withdrawals-list" style="max-height: 160px; overflow-y: auto;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Admin -->
+<div id="modal-admin" class="modal-backdrop">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">🛡️ Admin Panel</div>
+      <button class="modal-close" data-close="modal-admin">&times;</button>
+    </div>
+    <div style="font-size: 11px; color: #94a3b8; margin-bottom: 12px;">
+      Manage withdrawals & mark status as <strong>PAID</strong>.
+    </div>
+
+    <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 10px; margin-bottom: 14px; display: flex; gap: 8px; justify-content: space-between;">
+      <button class="btn-pill" style="font-size: 10px; background: #064e3b;" onclick="addTestCoins(1000)">+1,000</button>
+      <button class="btn-pill" style="font-size: 10px; background: #065f46;" onclick="addTestCoins(5000)">+5,000</button>
+      <button class="btn-pill" style="font-size: 10px; background: #047857;" onclick="addTestCoins(10000)">+10,000</button>
+    </div>
+
+    <div style="font-size: 12px; font-weight: 800; color: #cbd5e1; margin-bottom: 8px;">PENDING REQUESTS</div>
+    <div id="admin-withdrawals-list"></div>
+  </div>
+</div>
+
+<!-- Modal Result -->
+<div id="modal-result" class="modal-backdrop">
+  <div class="modal-box result-modal">
+    <div class="result-icon" id="result-icon">🏆</div>
+    <div class="result-title" id="result-title">Victory!</div>
+    <div class="result-reward" id="result-reward">+10 Coins Earned!</div>
+    <div class="result-btns">
+      <button class="btn-pill" id="btn-result-map" style="padding: 10px 18px; font-size: 13px;">🗺️ Map</button>
+      <button class="btn-pill btn-missions" id="btn-result-next" style="padding: 10px 20px; font-size: 13px;">Next Level ➔</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// --- GAME STATE ---
+const STORAGE_PREFIX = 'tw3d_standalone_';
+function getStore(key, def) {
+  try {
+    const val = localStorage.getItem(STORAGE_PREFIX + key);
+    return val !== null ? JSON.parse(val) : def;
+  } catch { return def; }
+}
+function setStore(key, val) {
+  try { localStorage.setItem(STORAGE_PREFIX + key, JSON.stringify(val)); } catch {}
+}
+
+const state = {
+  currentLevel: getStore('currentLevel', 1),
+  highestUnlockedLevel: getStore('highestLevel', 1),
+  coinBalance: getStore('coins', 0), // 0 coins on signup
+  winStreak: getStore('winStreak', 0),
+  maxWinStreak: getStore('maxWinStreak', 0),
+  levelsToday: getStore('levelsToday', 0),
+  playSeconds: getStore('playSeconds', 0),
+  claimedMissions: getStore('claimedMissions', {}),
+  withdrawals: getStore('withdrawals', []),
+  savedUpi: getStore('savedUpi', ''),
+};
+
+// Web Audio API
+let audioCtx = null;
+function playSound(type) {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    const now = audioCtx.currentTime;
+
+    if (type === 'march') {
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(300, now);
+      osc.frequency.exponentialRampToValueAtTime(150, now + 0.15);
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+      osc.start(now);
+      osc.stop(now + 0.15);
+    } else if (type === 'capture') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(440, now);
+      osc.frequency.setValueAtTime(880, now + 0.2);
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.linearRampToValueAtTime(0.01, now + 0.35);
+      osc.start(now);
+      osc.stop(now + 0.35);
+    } else if (type === 'victory') {
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(523, now);
+      osc.frequency.setValueAtTime(1046, now + 0.3);
+      gain.gain.setValueAtTime(0.25, now);
+      gain.gain.linearRampToValueAtTime(0.01, now + 0.6);
+      osc.start(now);
+      osc.stop(now + 0.6);
+    } else if (type === 'defeat') {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(300, now);
+      osc.frequency.linearRampToValueAtTime(150, now + 0.4);
+      gain.gain.setValueAtTime(0.2
